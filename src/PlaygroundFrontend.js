@@ -4,6 +4,9 @@ import '@vanillawc/wc-monaco-editor';
 import {vanilla} from './demos/vanilla.js';
 import {litelement} from './demos/litelement.js';
 import {stencil} from './demos/stencil.js';
+import {loading} from './icons/loading.js';
+import debounce from 'lodash-es/debounce.js';
+
 
 const demos = {
   vanilla,
@@ -11,39 +14,29 @@ const demos = {
   stencil,
 }
 
-function debounce(func, delay = 0) {
-  let timeoutId;
-
-  return function() {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      func.apply(this, arguments);
-    }, delay);
-  }
-};
-
-async function getManifest({library, newValue}) {
-  
-  const res = await fetch('https://playground-api.cleverapps.io/add', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      path: './my-element.js',
-      sourceCode: newValue,
-      library
-    })
-  });
-  const response = await res.json();
-  document.querySelector('#output').value = JSON.stringify(JSON.parse(response.customElementsManifest), null, 2)
-}
-
-const debouncedGetManifest = debounce(getManifest, 1000);
-
 export class PlaygroundFrontend extends LitElement {
+  static properties = { loading: {type: Boolean}}
   createRenderRoot() {
     return this;
+  }
+
+  debouncedGetManifest = debounce(this.getManifest, 1000);
+  async getManifest({newValue, library}) {
+    this.loading = true;
+    const res = await fetch('https://playground-api.cleverapps.io/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        path: './my-element.js',
+        sourceCode: newValue,
+        library
+      })
+    });
+    const response = await res.json();
+    this.loading = false;
+    document.querySelector('#output').value = JSON.stringify(JSON.parse(response.customElementsManifest), null, 2)
   }
 
   firstUpdated() {
@@ -55,11 +48,13 @@ export class PlaygroundFrontend extends LitElement {
     });
 
     const urlParams = new URLSearchParams(window.location.search);
-    const param = urlParams.get('source');
+    const source = urlParams.get('source');
+    const library = urlParams.get('library');
 
-    if(param) {
-      const decoded = decodeURIComponent(atob(param));
+    if(source) {
+      const decoded = decodeURIComponent(atob(source));
       this.monacoWc.value = decoded;
+      this.library = library;
     } else {
       this.monacoWc.value = demos.vanilla;
     }
@@ -76,23 +71,27 @@ export class PlaygroundFrontend extends LitElement {
     this.getNewCEM()
   }
 
-  getNewCEM() {
+  async getNewCEM() {
     const val = this.editor.getValue();
+
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.set("source", btoa(val));
+    urlParams.set("library", this.library);
     const newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?' + urlParams.toString();
     window.history.pushState({path: newurl}, '', newurl);
-    debouncedGetManifest({library: this.library, newValue: val});
+
+    this.debouncedGetManifest({library: this.library, newValue: val});
   }
 
   render() {
     return html`
       <header>
         <select @change=${this.handleChange} name="libraries">
-          <option value="vanilla">vanilla</option>
-          <option value="litelement">litelement</option>
-          <option value="stencil">stencil</option>
+          <option ?selected=${this.library === 'vanilla'} value="vanilla">vanilla</option>
+          <option ?selected=${this.library === 'litelement'} value="litelement">litelement</option>
+          <option ?selected=${this.library === 'stencil'} value="stencil">stencil</option>
         </select>
+        ${this.loading ? loading : ''}
         <a aria-label="github" target="_blank" href="https://www.github.com/open-wc/custom-elements-manifest">
           ${github}
         </a>
