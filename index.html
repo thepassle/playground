@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="Description" content="Put your description here.">
+  <base href="/">
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #ededed;
+    }
+
+    header {
+      height: 40px;
+      background: #2f3136;
+      box-shadow: rgb(0 0 0 / 50%) 0px 2px 5px 0px;
+      position: sticky;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    #github {
+      fill: white;
+      height: 25px;
+    }
+
+    main {
+      height: calc(100vh - 40px);
+      display: flex;
+      flex-direction: row;
+    }
+
+    wc-monaco-editor {
+      width: 50vw!important;
+      height: 100%!important;
+    }
+
+    @media (max-width: 600px) {
+      main {
+        flex-direction: column;
+      }
+
+      wc-monaco-editor {
+        width: 100vw!important;
+        height: 50%!important;
+      }
+    }
+  </style>
+  <title>playground-frontend</title>
+</head>
+
+<body>
+  <playground-frontend></playground-frontend>
+
+  <script type="module" src="./src/playground-frontend.js"></script>
+</body>
+
+</html>
