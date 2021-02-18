@@ -58,7 +58,7 @@ export class PlaygroundFrontend extends LitElement {
     const param = urlParams.get('source');
 
     if(param) {
-      const decoded = decodeURIComponent(param);
+      const decoded = decodeURIComponent(atob(param));
       this.monacoWc.value = decoded;
     } else {
       this.monacoWc.value = demos.vanilla;
@@ -79,7 +79,7 @@ export class PlaygroundFrontend extends LitElement {
   getNewCEM() {
     const val = this.editor.getValue();
     const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set("source", encodeURIComponent(val));
+    urlParams.set("source", btoa(val));
     const newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?' + urlParams.toString();
     window.history.pushState({path: newurl}, '', newurl);
     debouncedGetManifest({library: this.library, newValue: val});
