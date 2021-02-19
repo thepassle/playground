@@ -5,6 +5,7 @@ import monaco from 'rollup-plugin-monaco-editor';
 import resolve from '@rollup/plugin-node-resolve';
 import postcss from 'rollup-plugin-postcss';
 import commonjs from '@rollup/plugin-commonjs';
+import copy from 'rollup-plugin-copy';
 // use createBasicConfig to do regular JS to JS bundling
 // import { createBasicConfig } from '@open-wc/building-rollup';
 
@@ -34,6 +35,10 @@ export default merge(baseConfig, {
     }),
     resolve(),
     commonjs(),
+    copy({
+      targets: [{ src: 'node_modules/@vanillawc', dest: 'dist/node_modules' }],
+      hook: 'writeBundle'
+    })
   ]
 
   // alternatively, you can use your JS as entrypoint for rollup and
