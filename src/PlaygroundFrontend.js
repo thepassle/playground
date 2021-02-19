@@ -1,12 +1,14 @@
 import { LitElement, html } from 'lit-element';
-import { github } from './github-icon.svg.js';
 import '@vanillawc/wc-monaco-editor';
 import {vanilla} from './demos/vanilla.js';
 import {litelement} from './demos/litelement.js';
 import {stencil} from './demos/stencil.js';
+import { github } from './icons/github-icon.svg.js';
 import {loading} from './icons/loading.js';
 import debounce from 'lodash-es/debounce.js';
-
+import { dialog } from '@generic-components/components';
+import { render } from 'lit-html';
+import { createGithubIssue } from './utils/createGithubIssue.js';
 
 const demos = {
   vanilla,
@@ -17,6 +19,7 @@ const demos = {
 export class PlaygroundFrontend extends LitElement {
   static properties = { 
     loading: {type: Boolean},
+    error: {type: Boolean},
     library: {type: String},
   }
   createRenderRoot() {
@@ -26,20 +29,27 @@ export class PlaygroundFrontend extends LitElement {
   debouncedGetManifest = debounce(this.getManifest, 1000);
   async getManifest({newValue, library}) {
     this.loading = true;
-    const res = await fetch('https://playground-api.cleverapps.io/add', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        path: './my-element.js',
-        sourceCode: newValue,
-        library
-      })
-    });
-    const response = await res.json();
-    this.loading = false;
-    document.querySelector('#output').value = JSON.stringify(JSON.parse(response.customElementsManifest), null, 2)
+    try {
+      const res = await fetch('https://playground-api.cleverapps.io/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          path: './my-element.js',
+          sourceCode: newValue,
+          library
+        })
+      });
+      const response = await res.json();
+      this.loading = false;
+      this.error = false;
+      document.querySelector('#output').value = JSON.stringify(JSON.parse(response.customElementsManifest), null, 2)
+    } catch(e) {
+      this.error = true;
+      this.loading = false;
+      console.log(e)
+    }
   }
 
   firstUpdated() {
@@ -91,6 +101,38 @@ export class PlaygroundFrontend extends LitElement {
     this.debouncedGetManifest({library: this.library, newValue: val});
   }
 
+  handleError(e){
+    dialog.open({
+      invokerNode: e.target,
+      content: (dialogNode) => {
+        const issueUrl = createGithubIssue({
+          user: 'open-wc',
+          repo: 'custom-elements-manifest',
+          body: `# Playground issue
+
+Reproduction URL: 
+${window.location.href}
+
+## Additional information:
+Please enter additional information here.
+
+          `,
+          title: 'Found playground issue'
+        });
+
+        render(html`
+            <h1>Uh oh</h1>
+            <h2>Looks like you've found a bug!</h2>
+            <p>
+              You can help this project out by reporting the bug on our GitHub repository, all you have to do is click <a href="${issueUrl}" target="_blank">this link</a>.
+            </p>
+
+            <button @click=${() => dialog.close()}>Close</button>
+        `, dialogNode);
+      }
+    });
+  }
+
   render() {
     return html`
       <header>
@@ -100,6 +142,7 @@ export class PlaygroundFrontend extends LitElement {
           <option ?selected=${this.library === 'stencil'} value="stencil">stencil</option>
         </select>
         ${this.loading ? loading : ''}
+        ${this.error ? html`<button class="error" @click=${this.handleError}>❌</button>` : ''}
         <a aria-label="github" target="_blank" href="https://www.github.com/open-wc/custom-elements-manifest">
           ${github}
         </a>

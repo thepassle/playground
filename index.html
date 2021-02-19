@@ -8,6 +8,23 @@
   <base href="/">
 
   <style>
+
+    select:focus, button:focus, a:focus, generic-dialog-overlay::part(dialog):focus {
+      outline: 0;
+      border-radius: 5px;
+      box-shadow: 0 0 0 2px #41ffb0!important;
+      transition: box-shadow .1s ease-in-out;
+    }
+
+    .error {
+      display: flex;
+      background: transparent;
+      bordeR: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+
     html,
     body {
       margin: 0;
@@ -27,6 +44,22 @@
       justify-content: space-between;
       padding-left: 20px;
       padding-right: 20px;
+    }
+
+    generic-dialog-overlay::part(dialog) {
+      width: 400px;
+      background: rgb(69, 72, 76);
+      border-radius: 8px;
+      color: white;
+      padding: 10px;
+    }
+
+    h1 {
+      color: #41ffb0;
+    }
+
+    a {
+      color: #41ffb0;
     }
 
     #github {
