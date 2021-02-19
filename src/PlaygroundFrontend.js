@@ -15,7 +15,10 @@ const demos = {
 }
 
 export class PlaygroundFrontend extends LitElement {
-  static properties = { loading: {type: Boolean}}
+  static properties = { 
+    loading: {type: Boolean},
+    library: {type: String},
+  }
   createRenderRoot() {
     return this;
   }
@@ -49,7 +52,8 @@ export class PlaygroundFrontend extends LitElement {
 
     const urlParams = new URLSearchParams(window.location.search);
     const source = urlParams.get('source');
-    const library = urlParams.get('library');
+    this.library = urlParams.get('library');
+    if(this.library === 'null') this.library = 'vanilla';
 
     if(source) {
       const decoded = decodeURIComponent(atob(source));
@@ -58,10 +62,13 @@ export class PlaygroundFrontend extends LitElement {
     } else {
       this.monacoWc.value = demos.vanilla;
     }
+
+    this.debouncedGetManifest({library: this.library, newValue: this.editor.getValue()});
   }
 
   handleChange() {
     this.library = this.querySelector('select').value;
+
     this.monacoWc.value = demos[this.library];
     if(this.library === 'stencil') {
       window.monaco.editor.setModelLanguage(window.monaco.editor.getModels()[0], 'typescript')
@@ -76,6 +83,7 @@ export class PlaygroundFrontend extends LitElement {
 
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.set("source", btoa(val));
+
     urlParams.set("library", this.library);
     const newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?' + urlParams.toString();
     window.history.pushState({path: newurl}, '', newurl);
