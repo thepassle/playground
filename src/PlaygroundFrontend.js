@@ -1,6 +1,9 @@
 import { LitElement, html } from 'lit-element';
 import '@vanillawc/wc-monaco-editor';
+import {PLUGIN} from './demos/plugin.js';
 import {vanilla} from './demos/vanilla.js';
+import {catalyst} from './demos/catalyst.js';
+import {fastelement} from './demos/fastelement.js';
 import {litelement} from './demos/litelement.js';
 import {stencil} from './demos/stencil.js';
 import { github } from './icons/github-icon.svg.js';
@@ -10,10 +13,28 @@ import { dialog } from '@generic-components/components';
 import { render } from 'lit-html';
 import { createGithubIssue } from './utils/createGithubIssue.js';
 
+
+const issueUrl = () => createGithubIssue({
+  user: 'open-wc',
+  repo: 'custom-elements-manifest',
+  body: `# Playground issue
+
+Reproduction URL: 
+${window.location.href}
+
+## Additional information:
+Please enter additional information here.
+
+  `,
+  title: 'Found playground issue'
+});
+
 const demos = {
   vanilla,
   litelement,
   stencil,
+  fastelement,
+  catalyst
 }
 
 export class PlaygroundFrontend extends LitElement {
@@ -30,29 +51,66 @@ export class PlaygroundFrontend extends LitElement {
   async getManifest({newValue, library}) {
     this.loading = true;
     try {
-      const res = await fetch('https://playground-api.cleverapps.io/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          path: './my-element.js',
-          sourceCode: newValue,
-          library
-        })
-      });
-      const response = await res.json();
+      const modules = [ts.createSourceFile(
+        'src/my-element.js',
+        newValue,
+        ts.ScriptTarget.ES2015,
+        true,
+      )];
+
+      const pluginFn = this.getPluginFn()
+
+      let plugins = [pluginFn(), /* library plugins */];
+
+      switch(this.library) {
+        case 'litelement':
+          plugins = [...litPlugin(), ...plugins];
+          break;
+        case 'fastelement':
+          plugins = [...fastPlugin(), ...plugins];
+          break;
+        case 'stencil':
+          plugins = [stencilPlugin(), ...plugins];
+          break;
+        case 'catalyst':
+          plugins = [...catalystPlugin(), ...plugins];
+          break;
+      }
+
+      // add lib specific plugins here
+      const manifest = create({modules, plugins});
       this.loading = false;
       this.error = false;
-      document.querySelector('#output').value = JSON.stringify(JSON.parse(response.customElementsManifest), null, 2)
+      document.querySelector('#output').value = JSON.stringify(manifest, null, 2)
     } catch(e) {
+
+      document.querySelector('#output').value = `
+Uh oh!
+
+Looks like you've found a bug!
+
+You can help this project out by reporting the bug on our GitHub repository. 
+All you have to do is follow this link: 
+
+${issueUrl()}
+      `;
       this.error = true;
       this.loading = false;
       console.log(e)
     }
   }
 
+  getPluginFn() {
+    const value = this.pluginEditor.getValue();
+    const pluginFn = new Function(`return ${value.trim()}`)();
+    return pluginFn;
+  }
+
   firstUpdated() {
+    this.plugin = this.querySelector('#plugin');
+    this.plugin.value = PLUGIN;
+    this.pluginEditor = this.plugin.editor;
+
     this.monacoWc = this.querySelector('#code');
     this.editor = this.monacoWc.editor;
 
@@ -60,10 +118,20 @@ export class PlaygroundFrontend extends LitElement {
       this.getNewCEM();
     });
 
+    this.pluginEditor.getModel().onDidChangeContent(() => {
+      this.debouncedGetManifest({library: this.library, newValue: this.editor.getValue()});
+    });
+
+
     const urlParams = new URLSearchParams(window.location.search);
     const source = urlParams.get('source');
     this.library = urlParams.get('library');
+
     if(this.library === 'null') this.library = 'vanilla';
+    window.monaco.editor.setModelLanguage(window.monaco.editor.getModels()[0], 'typescript')
+    window.monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+      noSemanticValidation: true,
+    });
 
     if(source) {
       const decoded = decodeURIComponent(atob(source));
@@ -80,11 +148,6 @@ export class PlaygroundFrontend extends LitElement {
     this.library = this.querySelector('select').value;
 
     this.monacoWc.value = demos[this.library];
-    if(this.library === 'stencil') {
-      window.monaco.editor.setModelLanguage(window.monaco.editor.getModels()[0], 'typescript')
-    } else {
-      window.monaco.editor.setModelLanguage(window.monaco.editor.getModels()[0], 'javascript')
-    }
     this.getNewCEM()
   }
 
@@ -105,26 +168,11 @@ export class PlaygroundFrontend extends LitElement {
     dialog.open({
       invokerNode: e.target,
       content: (dialogNode) => {
-        const issueUrl = createGithubIssue({
-          user: 'open-wc',
-          repo: 'custom-elements-manifest',
-          body: `# Playground issue
-
-Reproduction URL: 
-${window.location.href}
-
-## Additional information:
-Please enter additional information here.
-
-          `,
-          title: 'Found playground issue'
-        });
-
         render(html`
             <h1>Uh oh</h1>
             <h2>Looks like you've found a bug!</h2>
             <p>
-              You can help this project out by reporting the bug on our GitHub repository, all you have to do is click <a href="${issueUrl}" target="_blank">this link</a>.
+              You can help this project out by reporting the bug on our GitHub repository, all you have to do is click <a id="issue" href="${issueUrl()}" target="_blank">this link</a>.
             </p>
 
             <button @click=${() => dialog.close()}>Close</button>
@@ -140,6 +188,8 @@ Please enter additional information here.
           <option ?selected=${this.library === 'vanilla'} value="vanilla">vanilla</option>
           <option ?selected=${this.library === 'litelement'} value="litelement">litelement</option>
           <option ?selected=${this.library === 'stencil'} value="stencil">stencil</option>
+          <option ?selected=${this.library === 'fastelement'} value="fastelement">fastelement</option>
+          <option ?selected=${this.library === 'catalyst'} value="catalyst">catalyst</option>
         </select>
         ${this.loading ? loading : ''}
         ${this.error ? html`<button class="error" @click=${this.handleError}>❌</button>` : ''}
@@ -149,7 +199,10 @@ Please enter additional information here.
       </header>
       </header>
       <main>
-        <wc-monaco-editor id="code" language="javascript"></wc-monaco-editor>
+        <div id="left">
+          <wc-monaco-editor id="code" language="javascript"></wc-monaco-editor>
+          <wc-monaco-editor id="plugin" language="javascript"></wc-monaco-editor>
+        </div>
         <wc-monaco-editor id="output" language="json"></wc-monaco-editor>
       </main>
     `;

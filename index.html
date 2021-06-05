@@ -3,6 +3,21 @@
 
 <head>
   <meta charset="utf-8">
+  <script src="https://unpkg.com/typescript@4.3.2/lib/typescript.js"></script>
+  <script src="https://unpkg.com/test-analyzer-ignore/browser/create.js"></script>
+  <script src="https://unpkg.com/test-analyzer-ignore/browser/catalyst.js"></script>
+  <script src="https://unpkg.com/test-analyzer-ignore/browser/fast.js"></script>
+  <script src="https://unpkg.com/test-analyzer-ignore/browser/lit.js"></script>
+  <script src="https://unpkg.com/test-analyzer-ignore/browser/stencil.js"></script>
+  <script>
+    window.create = analyzer.create;
+
+    window.litPlugin = lit.litPlugin;
+    window.fastPlugin = fast.fastPlugin;
+    window.stencilPlugin = stencil.stencilPlugin;
+    window.catalystPlugin = catalyst.catalystPlugin;
+  </script>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="Description" content="Put your description here.">
   <base href="/">
@@ -12,8 +27,19 @@
     select:focus, button:focus, a:focus, generic-dialog-overlay::part(dialog):focus {
       outline: 0;
       border-radius: 5px;
-      box-shadow: 0 0 0 2px #41ffb0!important;
-      transition: box-shadow .1s ease-in-out;
+      animation: foo 1.5s infinite!important;
+    }
+
+    @keyframes foo {
+      0% {
+        box-shadow: 0 0 0 2px #78fbe1, 0px 3px 4px 0px rgba(0,0,0,0.5);
+      }
+      50% {
+        box-shadow: 0 0 0 2px #40b1af, 0px 3px 4px 0px rgba(0,0,0,0.5);
+      }
+      100% {
+        box-shadow: 0 0 0 2px #78fbe1, 0px 3px 4px 0px rgba(0,0,0,0.5);
+      }
     }
 
     .error {
@@ -60,6 +86,17 @@
 
     a {
       color: #41ffb0;
+      line-height: 0;
+      border-radius: 50%!important;
+    }
+
+    svg {
+      border-radius: 50%;
+      width: auto;
+    }
+
+    #issue {
+      border-radius: 5px!important;
     }
 
     #github {
@@ -76,6 +113,10 @@
     wc-monaco-editor {
       width: 50vw!important;
       height: 100%!important;
+    }
+
+    #code {
+      height: 50%!important;
     }
 
     @media (max-width: 600px) {
