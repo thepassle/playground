@@ -2,6 +2,8 @@ export const PLUGIN = `
 function myPlugin() {
   // Write a custom plugin
   return {
+    // Make sure to always give your plugins a name, this helps when debugging
+    name: 'my-plugin',
     // Runs for all modules in a project, before continuing to the analyzePhase
     collectPhase({ts, node, context}){},
     // Runs for each module
