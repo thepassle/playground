@@ -78,7 +78,7 @@ export class PlaygroundFrontend extends LitElement {
       }
 
       // add lib specific plugins here
-      const manifest = create({modules, plugins});
+      const manifest = create({modules, plugins, dev: true});
       this.loading = false;
       this.error = false;
       document.querySelector('#output').value = JSON.stringify(manifest, null, 2)
