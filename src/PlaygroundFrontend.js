@@ -12,7 +12,7 @@ import debounce from 'lodash-es/debounce.js';
 import { dialog } from '@generic-components/components';
 import { render } from 'lit-html';
 import { createGithubIssue } from './utils/createGithubIssue.js';
-
+import { ts, create, catalystPlugin, litPlugin, stencilPlugin, fastPlugin } from 'https://unpkg.com/@custom-elements-manifest/analyzer/browser/index.js';
 
 const issueUrl = () => createGithubIssue({
   user: 'open-wc',
