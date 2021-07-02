@@ -1,10 +1,20 @@
 export const vanilla = `
-export class MyElement extends HTMLElement {
-  foo = 'hello';
+class MyElement extends HTMLElement {
+  static get observedAttributes() {
+    return ['disabled'];
+  }
 
-  /**
-   * @bar this is custom information
-   */
-  message;
+  set disabled(val) {
+    this.__disabled = val;
+  }
+  get disabled() {
+    return this.__disabled;
+  }
+
+  fire() {
+    this.dispatchEvent(new Event('disabled-changed'));
+  }
 }
+
+customElements.define('my-element', MyElement);
 `;
