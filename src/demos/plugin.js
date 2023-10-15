@@ -4,6 +4,8 @@ function myPlugin() {
   return {
     // Make sure to always give your plugins a name, this helps when debugging
     name: 'my-plugin',
+    // Runs before analysis starts
+    initialize({ts, customElementsManifest, context}) {},
     // Runs for all modules in a project, before continuing to the analyzePhase
     collectPhase({ts, node, context}){},
     // Runs for each module
